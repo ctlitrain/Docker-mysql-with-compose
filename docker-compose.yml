@@ -1,0 +1,40 @@
+version: '3'
+
+services:
+  mysql-docker-container:
+    container_name: mysql-docker-container
+    image: mysql:latest
+    environment:
+      - MYSQL_ROOT_PASSWORD=password
+      - MYSQL_DATABASE=test
+      - MYSQL_USER=sa
+      - MYSQL_PASSWORD=password
+    ports:
+      - 3307:3306
+    networks:
+      - spring-mysql-network
+  spring-boot-jpa-app:
+    container_name: spring-boot-jpa-app
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    image: spring-boot-jpa-image:latest
+    entrypoint: /opt/bin/spring-docker-entrypoint.sh
+    depends_on:
+      - mysql-docker-container
+    ports:
+      - 8080:8080
+    links:
+      - mysql-docker-container:mysql-docker-container
+    networks:
+      - spring-mysql-network
+    environment:
+      - DATABASE_HOST=mysql-docker-container
+      - DATABASE_USER=sa
+      - DATABASE_PASSWORD=password
+      - DATABASE_NAME=test
+      - DATABASE_PORT=3306
+
+networks:
+  spring-mysql-network:
+    driver: bridge

@@ -1,0 +1,32 @@
+FROM openjdk:8
+ADD target/spring-docker-friday.jar spring-docker-friday.jar
+COPY spring-docker-entrypoint.sh /opt/bin/spring-docker-entrypoint.sh
+EXPOSE 8086
+ENTRYPOINT ["java", "-jar", "spring-docker-friday.jar"]
+
+
+FROM openjdk:8
+COPY target/spring-docker-friday.jar /opt/lib/
+COPY spring-docker-entrypoint.sh /opt/bin/spring-docker-entrypoint.sh
+RUN chmod 755 /opt/bin/spring-docker-entrypoint.sh
+EXPOSE 8086
+
+
+FROM java:8
+FROM maven:alpine
+
+WORKDIR /app
+
+COPY . /app
+
+RUN mvn -v
+RUN mvn clean install -DskipTests
+EXPOSE 8086
+ADD target/spring-docker-friday.jar spring-docker-friday.jar
+ENTRYPOINT ["java","-jar","spring-docker-friday.jar"]
+
+while ! nc -z mysql-docker-container 3306 ; do
+    echo "Waiting for the mysql-standalone"
+    sleep 3
+done
+java -jar /opt/lib/spring-docker-friday.jar
